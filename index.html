@@ -1,0 +1,827 @@
+//painel ilustrativo
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>8808-Painel Expedições</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f1a;
+      --panel: #141a2a;
+      --panel-2: #171e33;
+      --border: #232b42;
+      --text: #e8ebf5;
+      --muted: #8891a8;
+      --orange: #f2542d;
+      --orange-dim: #f2542d33;
+      --yellow: #f0c419;
+      --red: #e64d5b;
+      --green: #3ecf8e;
+      --blue: #7fb4ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ===== Header ===== */
+    header {
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 26px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand { display: flex; align-items: center; gap: 14px; }
+
+    .brand .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .brand .logo svg { width: 19px; height: 19px; fill: #fff; }
+
+    .brand .title { font-size: 18px; letter-spacing: .5px; font-weight: 700; }
+    .brand .title span { color: var(--orange); }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    .sync-badge {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: .5px;
+    }
+
+    .reload-btn {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: .5px;
+      cursor: pointer;
+    }
+    .reload-btn:hover { color: var(--text); border-color: #39435f; }
+
+    /* ===== Layout principal ===== */
+    main { padding: 22px 26px 60px; }
+
+    .tabs {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 8px;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: .5px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: .15s;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      justify-content: center;
+    }
+    .tab:hover { color: var(--text); border-color: #39435f; }
+    .tab.active {
+      color: var(--orange);
+      border-color: var(--orange);
+      box-shadow: 0 0 0 1px var(--orange-dim) inset;
+      background: #1c1420;
+    }
+    .tab .tab-main { font-size: 13px; font-weight: 700; }
+    .tab .count-split { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+    .tab.active .count-split { color: #bda8a0; }
+
+    /* ===== KPIs ===== */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .kpi .label {
+      font-size: 11px;
+      letter-spacing: .7px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 9px;
+    }
+    .kpi .value { font-size: 29px; font-weight: 800; }
+    .kpi.v-orange .value { color: var(--orange); }
+    .kpi.v-yellow .value { color: var(--yellow); }
+    .kpi.v-red .value { color: var(--red); }
+    .kpi.v-green .value { color: var(--green); }
+    .kpi .sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+    /* ===== Breakdown por turno ===== */
+    .turno-breakdown {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .turno-chip {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 11.5px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .turno-chip b { color: var(--text); font-size: 12.5px; }
+    .turno-chip .status-sub { font-size: 10.5px; color: var(--muted); }
+    .turno-chip .bar {
+      width: 50px;
+      height: 5px;
+      border-radius: 3px;
+      background: #1c2338;
+      overflow: hidden;
+    }
+    .turno-chip .bar i { display: block; height: 100%; background: var(--orange); }
+
+    /* ===== Controles / filtros ===== */
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 9px; }
+
+    .pill {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 9px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: .15s;
+      white-space: nowrap;
+    }
+    .pill:hover { color: var(--text); }
+    .pill.active {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #1a0b06;
+    }
+
+    select.custom-select {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 9px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: .3px;
+      cursor: pointer;
+    }
+
+    /* ===== Painéis ===== */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+      margin-bottom: 20px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .6px;
+      margin-bottom: 16px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--red);
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .chart-wrap { position: relative; height: 320px; }
+
+    /* ===== Tabela ===== */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+    thead th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: .4px;
+      font-size: 11px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--panel);
+    }
+
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #1c2338;
+    }
+    tbody tr:hover { background: #171f36; }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: .3px;
+    }
+    .badge.SOC   { background: #2a3f61; color: var(--blue); }
+    .badge.LMHUB { background: #3a2a1f; color: var(--orange); }
+    .badge.XPT   { background: #233d33; color: var(--green); }
+    .badge.OUTRO { background: #2a2a3a; color: var(--muted); }
+    .badge.turno { background: #232b42; color: #c7cee3; }
+    .badge.status-CONCLUÍDO { background: #133a2a; color: var(--green); }
+    .badge.status-PLANEJADO { background: #3a2e13; color: var(--yellow); }
+
+    .mono { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .win-tight { color: var(--red); font-weight: 700; }
+    .win-ok { color: var(--muted); }
+
+    .table-scroll { max-height: 480px; overflow-y: auto; }
+    .table-scroll::-webkit-scrollbar { width: 8px; }
+    .table-scroll::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 4px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footnote { color: var(--muted); font-size: 11.5px; margin-top: 10px; }
+
+    @media (max-width: 1000px) {
+      .tabs { grid-auto-flow: row; grid-template-columns: repeat(2, 1fr); }
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ===== Footer ===== */
+    footer.pic-footer {
+      margin-top: auto;
+      padding: 20px 0;
+      border-top: 1px solid var(--border);
+      background: rgba(18, 18, 18, 0.4);
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    footer.pic-footer .footer-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+    footer.pic-footer .footer-label { color: var(--muted); }
+    footer.pic-footer .footer-value { color: var(--text); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      </div>
+      <div class="title">8808-PAINEL <span>EXPEDIÇÕES</span></div>
+    </div>
+    <div class="header-right">
+      <div class="reload-btn" id="reloadBtn">↻ ATUALIZAR</div>
+      <div class="sync-badge" id="syncBadge">● DADOS AO VIVO</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="tabs" id="tabs"></div>
+
+    <div class="kpis" id="kpis">
+      <div class="kpi v-orange">
+        <div class="label">TOTAL DE EXPEDIÇÕES</div>
+        <div class="value" id="kpi-total">–</div>
+        <div class="sub" id="kpi-total-sub">–</div>
+      </div>
+      <div class="kpi v-yellow">
+        <div class="label">JANELA MÉDIA (ETA → CPT)</div>
+        <div class="value" id="kpi-janela">–</div>
+        <div class="sub" id="kpi-janela-sub">–</div>
+      </div>
+      <div class="kpi v-green">
+        <div class="label">ETA</div>
+        <div class="value" id="kpi-first">–</div>
+        <div class="sub" id="kpi-first-sub">Início do dia</div>
+      </div>
+      <div class="kpi v-red">
+        <div class="label">ÚLTIMO CPT</div>
+        <div class="value" id="kpi-last">–</div>
+        <div class="sub">Término do dia</div>
+      </div>
+    </div>
+
+    <div class="turno-breakdown" id="turnoBreakdown"></div>
+
+    <div class="controls-row">
+      <div class="filters" id="catFilters"></div>
+      <select class="custom-select" id="ufSelect"></select>
+      <select class="custom-select" id="statusSelect">
+        <option value="ALL">TODOS OS STATUS</option>
+        <option value="PLANEJADO">APENAS PLANEJADOS</option>
+        <option value="CONCLUÍDO">APENAS CONCLUÍDOS</option>
+      </select>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><span class="dot"></span> EXPEDIÇÕES POR HORA (ETA)</div>
+      <div class="chart-wrap"><canvas id="hourChart"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><span class="dot"></span> DETALHAMENTO DAS EXPEDIÇÕES</div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>STATUS</th>
+              <th>TURNO</th>
+              <th>TRANSP.</th>
+              <th>DESTINO</th>
+              <th>CÓDIGO</th>
+              <th>ETA</th>
+              <th>CPT</th>
+              <th>JANELA</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="footnote" id="footnote"></div>
+    </div>
+  </main>
+
+  <footer class="pic-footer">
+    <div class="footer-inner">
+      <span class="footer-label">PIC:</span>
+      <span class="footer-value">Kauã Miranda</span>
+    </div>
+  </footer>
+
+  <script>
+    // ===== Estado global =====
+    let DATA = [];
+    let state = { turno: 'ALL', cat: 'ALL', uf: 'ALL', status: 'ALL' };
+    let chart;
+
+    // ===== Utilitários de tempo =====
+    function toMin(hms) {
+      if (!hms) return 0;
+      const p = hms.split(":").map(Number);
+      return (p[0] || 0) * 60 + (p[1] || 0);
+    }
+
+    function toLogisticMin(hms) {
+      let m = toMin(hms);
+      if (m < 360) {
+        m += 1440;
+      }
+      return m;
+    }
+
+    function fmtHM(min) {
+      let realMin = min % 1440;
+      if (realMin < 0) realMin = 0;
+      const h = Math.floor(realMin / 60), m = realMin % 60;
+      return String(h).padStart(2, '0') + ":" + String(m).padStart(2, '0');
+    }
+
+    function fmtWindow(eta, cpt) {
+      let d = toMin(cpt) - toMin(eta);
+      if (d < 0) d += 1440;
+      const h = Math.floor(d / 60), m = d % 60;
+      if (h > 0 && m > 0) return h + "h" + String(m).padStart(2, '0');
+      if (h > 0) return h + "h";
+      return m + "min";
+    }
+
+    function catClass(cat) { return cat === "LM HUB" ? "LMHUB" : cat; }
+
+    function turnosOrdenados() {
+      const set = [...new Set(DATA.map(r => r.turno))];
+      return set.sort();
+    }
+
+    function getSplitCountsStr(arr) {
+      const pl = arr.filter(r => r.status === 'PLANEJADO').length;
+      const co = arr.filter(r => r.status === 'CONCLUÍDO').length;
+      return `${arr.length} (${pl} P / ${co} C)`;
+    }
+
+    // ===== Construção de UI =====
+    function buildTabs() {
+      const turnos = turnosOrdenados();
+      const wrap = document.getElementById('tabs');
+      let html = `<div class="tab ${state.turno === 'ALL' ? 'active' : ''}" data-turno="ALL">
+        <span class="tab-main">GERENCIAL</span>
+        <span class="count-split">${getSplitCountsStr(DATA)}</span>
+      </div>`;
+      turnos.forEach(t => {
+        const subset = DATA.filter(r => r.turno === t);
+        html += `<div class="tab ${state.turno === t ? 'active' : ''}" data-turno="${t}">
+          <span class="tab-main">${t}</span>
+          <span class="count-split">${getSplitCountsStr(subset)}</span>
+        </div>`;
+      });
+      wrap.innerHTML = html;
+    }
+
+    function baseFilteredByTurno() {
+      return state.turno === 'ALL' ? DATA : DATA.filter(r => r.turno === state.turno);
+    }
+
+    function filtered() {
+      return baseFilteredByTurno().filter(r =>
+        (state.cat === 'ALL' || r.cat === state.cat) &&
+        (state.uf === 'ALL' || r.uf === state.uf) &&
+        (state.status === 'ALL' || r.status === state.status)
+      );
+    }
+
+    function buildCatFilters() {
+      const base = baseFilteredByTurno().filter(r =>
+        (state.uf === 'ALL' || r.uf === state.uf) &&
+        (state.status === 'ALL' || r.status === state.status)
+      );
+      const cats = ['SOC', 'LM HUB', 'XPT', 'OUTRO'];
+      const counts = {};
+      cats.forEach(c => counts[c] = base.filter(r => r.cat === c).length);
+
+      const wrap = document.getElementById('catFilters');
+      let html = `<div class="pill ${state.cat === 'ALL' ? 'active' : ''}" data-cat="ALL">GERAL (${base.length})</div>`;
+      cats.forEach(c => {
+        if (counts[c] === 0 && state.cat !== c) return;
+        html += `<div class="pill ${state.cat === c ? 'active' : ''}" data-cat="${c}">${c} (${counts[c]})</div>`;
+      });
+      wrap.innerHTML = html;
+    }
+
+    function buildUfSelect() {
+      const base = baseFilteredByTurno().filter(r =>
+        (state.cat === 'ALL' || r.cat === state.cat) &&
+        (state.status === 'ALL' || r.status === state.status)
+      );
+      const ufCounts = {};
+      base.forEach(r => { if (r.uf) { ufCounts[r.uf] = (ufCounts[r.uf] || 0) + 1; } });
+      const ufs = Object.keys(ufCounts).sort((a, b) => ufCounts[b] - ufCounts[a]);
+
+      const sel = document.getElementById('ufSelect');
+      let html = `<option value="ALL">TODOS OS ESTADOS (${base.length})</option>`;
+      ufs.forEach(uf => {
+        html += `<option value="${uf}" ${state.uf === uf ? 'selected' : ''}>${uf} (${ufCounts[uf]})</option>`;
+      });
+      sel.innerHTML = html;
+      sel.value = state.uf;
+    }
+
+    function renderTurnoBreakdown() {
+      const wrap = document.getElementById('turnoBreakdown');
+      if (state.turno !== 'ALL') { wrap.innerHTML = ''; wrap.style.display = 'none'; return; }
+      wrap.style.display = 'flex';
+
+      const turnos = turnosOrdenados();
+      const max = Math.max(...turnos.map(t => DATA.filter(r => r.turno === t).length), 1);
+
+      wrap.innerHTML = turnos.map(t => {
+        const subset = DATA.filter(r => r.turno === t);
+        const pl = subset.filter(r => r.status === 'PLANEJADO').length;
+        const co = subset.filter(r => r.status === 'CONCLUÍDO').length;
+        const pct = Math.round((subset.length / max) * 100);
+        return `<div class="turno-chip">
+          ${t}: <b>${subset.length}</b> <span class="status-sub">(${pl} P / ${co} C)</span>
+          <div class="bar"><i style="width:${pct}%"></i></div>
+        </div>`;
+      }).join('');
+    }
+
+    // ===== KPIs =====
+    function renderKPIs() {
+      const rows = filtered();
+      document.getElementById('kpi-total').textContent = rows.length;
+      document.getElementById('kpi-total-sub').textContent =
+        (state.turno === 'ALL' ? 'Todos os turnos' : state.turno) +
+        (state.cat === 'ALL' ? '' : ' · ' + state.cat) +
+        (state.uf === 'ALL' ? '' : ' · ' + state.uf) +
+        (state.status === 'ALL' ? '' : ' · ' + state.status);
+
+      if (rows.length) {
+        const diffs = rows.map(r => {
+          let diff = toMin(r.cpt) - toMin(r.eta);
+          if (diff < 0) diff += 1440;
+          return diff;
+        });
+        const avg = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+        const h = Math.floor(avg / 60), m = Math.round(avg % 60);
+
+        document.getElementById('kpi-janela').textContent =
+          (h > 0 ? h + 'h' : '') + String(m).padStart(2, '0') + 'm';
+        document.getElementById('kpi-janela-sub').textContent =
+          'Mín ' + Math.min(...diffs) + 'min · Máx ' + Math.max(...diffs) + 'min';
+
+        let displayFirstMin;
+        if (state.turno === 'ALL') {
+          const t1Rows = DATA.filter(r => r.turno === 'T1');
+          if (t1Rows.length) {
+            displayFirstMin = Math.min(...t1Rows.map(r => toLogisticMin(r.eta)));
+            document.getElementById('kpi-first-sub').textContent = 'Espelhando início do T1';
+          } else {
+            displayFirstMin = Math.min(...rows.map(r => toLogisticMin(r.eta)));
+            document.getElementById('kpi-first-sub').textContent = 'Início da janela logístico';
+          }
+        } else {
+          displayFirstMin = Math.min(...rows.map(r => toLogisticMin(r.eta)));
+          document.getElementById('kpi-first-sub').textContent = 'Início do turno ' + state.turno;
+        }
+
+        const lastMin = Math.max(...rows.map(r => toLogisticMin(r.cpt)));
+        document.getElementById('kpi-first').textContent = fmtHM(displayFirstMin);
+        document.getElementById('kpi-last').textContent = fmtHM(lastMin);
+      } else {
+        document.getElementById('kpi-janela').textContent = '--';
+        document.getElementById('kpi-janela-sub').textContent = '';
+        document.getElementById('kpi-first').textContent = '--:--';
+        document.getElementById('kpi-first-sub').textContent = 'Sem dados';
+        document.getElementById('kpi-last').textContent = '--:--';
+      }
+    }
+
+    // ===== Gráfico =====
+    function renderChart() {
+      const rows = filtered();
+      const hourSet = [...new Set(rows.map(r => parseInt(r.eta.slice(0, 2), 10)))];
+      hourSet.sort((a, b) => {
+        let logA = a < 6 ? a + 24 : a;
+        let logB = b < 6 ? b + 24 : b;
+        return logA - logB;
+      });
+      const hours = hourSet.length ? hourSet : [6];
+      const labels = hours.map(h => String(h).padStart(2, '0') + 'h');
+
+      // separa contagem por status, hora a hora
+      const countsConcluido = hours.map(h =>
+        rows.filter(r => parseInt(r.eta.slice(0, 2), 10) === h && r.status === 'CONCLUÍDO').length
+      );
+      const countsPlanejado = hours.map(h =>
+        rows.filter(r => parseInt(r.eta.slice(0, 2), 10) === h && r.status === 'PLANEJADO').length
+      );
+      const avgWindow = hours.map(h => {
+        const set = rows.filter(r => parseInt(r.eta.slice(0, 2), 10) === h);
+        if (!set.length) return null;
+        return Math.round(set.reduce((s, r) => {
+          let diff = toMin(r.cpt) - toMin(r.eta);
+          if (diff < 0) diff += 1440;
+          return s + diff;
+        }, 0) / set.length);
+      });
+
+      const ctx = document.getElementById('hourChart').getContext('2d');
+      if (chart) chart.destroy();
+      if (!rows.length) return;
+
+      chart = new Chart(ctx, {
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Concluído',
+              data: countsConcluido,
+              backgroundColor: '#f2542d',
+              borderRadius: 4,
+              barPercentage: 0.55,
+              stack: 'exp',
+              yAxisID: 'y'
+            },
+            {
+              type: 'bar',
+              label: 'Planejado',
+              data: countsPlanejado,
+              backgroundColor: 'rgba(242,84,45,0.28)',
+              borderColor: '#f2542d',
+              borderWidth: 1.5,
+              borderDash: [4, 3],
+              borderRadius: 4,
+              barPercentage: 0.55,
+              stack: 'exp',
+              yAxisID: 'y'
+            },
+            {
+              type: 'line',
+              label: 'Janela média (min)',
+              data: avgWindow,
+              borderColor: '#ffffff',
+              backgroundColor: '#ffffff',
+              borderWidth: 2,
+              pointRadius: 3,
+              tension: .4,
+              spanGaps: true,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { labels: { color: '#8891a8', usePointStyle: true, boxWidth: 8 } } },
+          scales: {
+            x: { stacked: true, ticks: { color: '#8891a8' }, grid: { color: '#1c2338' } },
+            y: {
+              stacked: true,
+              position: 'left',
+              ticks: { color: '#8891a8', precision: 0 },
+              grid: { color: '#1c2338' },
+              title: { display: true, text: 'Nº de expedições', color: '#8891a8' }
+            },
+            y1: {
+              position: 'right',
+              ticks: { color: '#8891a8' },
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: 'Minutos', color: '#8891a8' }
+            }
+          }
+        }
+      });
+    }
+
+    // ===== Tabela =====
+    function renderTable() {
+      const rows = filtered().slice().sort((a, b) => {
+        if (a.turno === b.turno) {
+          return toLogisticMin(a.eta) - toLogisticMin(b.eta);
+        }
+        return a.turno.localeCompare(b.turno);
+      });
+
+      const tbody = document.getElementById('tableBody');
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">Nenhuma expedição encontrada para este filtro.</div></td></tr>`;
+      } else {
+        tbody.innerHTML = rows.map(r => {
+          let win = toMin(r.cpt) - toMin(r.eta);
+          if (win < 0) win += 1440;
+          const winClass = win <= 60 ? 'win-tight' : 'win-ok';
+          return `<tr>
+            <td><span class="badge status-${r.status}">${r.status}</span></td>
+            <td><span class="badge turno">${r.turno}</span></td>
+            <td><span class="badge ${catClass(r.cat)}">${r.cat}</span></td>
+            <td>${r.destino}</td>
+            <td class="mono">${r.code}</td>
+            <td class="mono">${r.eta.slice(0, 5)}</td>
+            <td class="mono">${r.cpt.slice(0, 5)}</td>
+            <td class="mono ${winClass}">${fmtWindow(r.eta, r.cpt)}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      document.getElementById('footnote').textContent =
+        `${rows.length} expedição(ões) exibida(s) · dados consolidados com base na janela operacional (06h às 05h59).`;
+    }
+
+    // ===== Render geral =====
+    function renderAll() {
+      buildTabs();
+      buildCatFilters();
+      buildUfSelect();
+      renderTurnoBreakdown();
+      renderKPIs();
+      renderChart();
+      renderTable();
+    }
+
+    // ===== Eventos =====
+    document.addEventListener('click', e => {
+      const tab = e.target.closest('#tabs .tab');
+      if (tab) {
+        state.turno = tab.dataset.turno;
+        state.cat = 'ALL';
+        state.uf = 'ALL';
+        state.status = 'ALL';
+        document.getElementById('statusSelect').value = 'ALL';
+        renderAll();
+        return;
+      }
+
+      const pill = e.target.closest('#catFilters .pill');
+      if (pill) {
+        state.cat = pill.dataset.cat;
+        renderAll();
+        return;
+      }
+
+      const reload = e.target.closest('#reloadBtn');
+      if (reload) {
+        loadData(true);
+        return;
+      }
+    });
+
+    document.addEventListener('change', e => {
+      if (e.target.id === 'ufSelect') {
+        state.uf = e.target.value;
+        renderAll();
+      }
+      if (e.target.id === 'statusSelect') {
+        state.status = e.target.value;
+        renderAll();
+      }
+    });
+
+    // ===== Carregamento de dados =====
+    function loadData(isReload) {
+      const badge = document.getElementById('syncBadge');
+      badge.textContent = '● CARREGANDO...';
+      badge.style.color = '#f0c419';
+
+      google.script.run
+        .withSuccessHandler(function (data) {
+          DATA = data;
+          badge.textContent = '● DADOS AO VIVO';
+          badge.style.color = '#3ecf8e';
+          renderAll();
+        })
+        .withFailureHandler(function (err) {
+          badge.textContent = '● ERRO AO CARREGAR';
+          badge.style.color = '#e64d5b';
+          console.error(err);
+        })
+        .getExpedicoesData();
+    }
+
+    loadData(false);
+  </script>
+</body>
+</html>
